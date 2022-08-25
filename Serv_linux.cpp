@@ -1,5 +1,4 @@
-/* A simple server in the internet domain using TCP
-   The port number is passed as an argument */
+/* A simple server in the internet domain using TCP */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,20 +15,16 @@ void error(const char *msg)
 
 int main(int argc, char *argv[])
 {
-     int sockfd, newsockfd, portno;
+     int sockfd, newsockfd;
+     int portno = 21947;
      socklen_t clilen;
      char buffer[256];
      struct sockaddr_in serv_addr, cli_addr;
      int n;
-     if (argc < 2) {
-         fprintf(stderr,"ERROR, no port provided\n");
-         exit(1);
-     }
      sockfd = socket(AF_INET, SOCK_STREAM, 0);
      if (sockfd < 0) 
         error("ERROR opening socket");
      bzero((char *) &serv_addr, sizeof(serv_addr));
-     portno = atoi(argv[1]);
      serv_addr.sin_family = AF_INET;
      serv_addr.sin_addr.s_addr = INADDR_ANY;
      serv_addr.sin_port = htons(portno);
