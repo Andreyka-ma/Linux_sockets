@@ -35,10 +35,12 @@ int main(int argc, char *argv[])
               
      listen(sockfd,5);
      clilen = sizeof(cli_addr);
+     std::cout << "Process blocked\n";
      newsockfd = accept(sockfd, 
                  (struct sockaddr *) &cli_addr, 
                  &clilen);
      if (newsockfd < 0) { error("ERROR on accept"); }
+     std::cout << "Unblocked\n";
      
      bzero(buffer,256);
      n = read(newsockfd,buffer,255);
