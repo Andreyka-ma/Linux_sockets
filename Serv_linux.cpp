@@ -47,6 +47,7 @@ int main(int argc, char *argv[])
      if (n < 0) { error("ERROR reading from socket"); }
      
      std::cout << "Here is the message: " << buffer << '\n';
+
      n = write(newsockfd,"I got your message",18);
      if (n < 0) { error("ERROR writing to socket"); }
      
