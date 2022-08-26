@@ -1,6 +1,6 @@
 #include <iostream>
 //#include <stdio.h>
-#include <stdlib.h>
+//#include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
@@ -67,8 +67,9 @@ int main(int argc, char *argv[])
 		}       
 		std::cout << "n: " << n << '\n';
 		std::cout << "Server message: " << buffer << '\n';
-		char c = 'W';
-		int nw = write(sockfd,&c,1);
+		// Обратная связь с сервером
+		bool lost_con = 0;
+		write(sockfd, &lost_con, 1);
 	}
     
     close(sockfd);
