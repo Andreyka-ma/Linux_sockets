@@ -70,9 +70,3 @@ int main(int argc, char *argv[])
 	close(sockfd);
 	return 0; 
 }
-
-void do_stuff() {
-	//n = read(newsockfd,buffer,255);
-	//if (n < 0) { error("ERROR reading from socket"); }
-	//std::cout << "Here is the message: " << buffer << '\n';
-}

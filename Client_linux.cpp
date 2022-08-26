@@ -1,5 +1,5 @@
 #include <iostream>
-#include <stdio.h>
+//#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -12,8 +12,6 @@ void error(const char *msg)
 {
 	std::cout << msg;
 	return;
-    perror(msg);
-    exit(0);
 }
 
 int main(int argc, char *argv[])
@@ -42,21 +40,13 @@ int main(int argc, char *argv[])
     serv_addr.sin_port = htons(portno);
     
     while (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0)  {
-        printf("Connection error, retrying...\n"); // error() call
+        printf("Connection error, retrying...\n"); 
         usleep(1000000);
     }
 	   
 	std::cout << "Connected.\n";
 	   
 	while (1) {
-		//std::cin >> inp;
-		//printf("Please enter the message: ");
-		//bzero(buffer,256);
-		//fgets(buffer,255,stdin);
-		//n = write(sockfd,buffer,strlen(buffer));
-		//if (n < 0) 
-		//error("ERROR writing to socket");
-		 
 		char val;
 		bzero(buffer,256);
 		n = read(sockfd,buffer,255);
