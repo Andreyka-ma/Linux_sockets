@@ -2,13 +2,17 @@
 #include<future>
 #include<mutex>
 #include <condition_variable>
+#include <unistd.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h> 
         
 class Semaphore {
 public:
     Semaphore (int count_ = 0)
-    : count(count_) 
-    {
-    }
+    : count(count_) {}
     
     inline void release() {
         std::unique_lock<std::mutex> lock(mtx);
@@ -32,13 +36,56 @@ private:
 
 class MTBuff {
 public:
-	MTBuff() : buff(""), exit_prog(0) {
+	MTBuff() : buff(""), exit_prog(0), connected(0) {
 		// Запуск потоков чтения и записи
 		// Поток 1
 		std::future<void> fut1 = std::async(std::launch::async, &MTBuff::write_to_buff, this);
 		// Поток 2
 		std::future<void> fut2 = std::async(std::launch::async, &MTBuff::read_buff, this);
+		
+		// Создание соединения с программой 2
+		std::cout << "CLIENT\n";
+		sockfd = socket(AF_INET, SOCK_STREAM, 0);
+		    
+		struct hostent *server = gethostbyname("localhost");
+		if (server == NULL) {
+		    fprintf(stderr,"ERROR, no such host\n");
+		    exit(0);
+		}
+		
+		// Адрес сервера ============================== ПЕРЕНЕСТИ В ПОЛЯ КЛАССА
+		int portno = 21947;
+		struct sockaddr_in serv_addr;    
+		bzero((char *) &serv_addr, sizeof(serv_addr));
+		serv_addr.sin_family = AF_INET;
+		serv_addr.sin_port = htons(portno);
+		bcopy((char *)server->h_addr, 
+		     (char *)&serv_addr.sin_addr.s_addr,
+		     server->h_length);
+		     
+		// Поддержание соединения с сервером
+		while(!exit_prog) {
+			usleep(1000000); // ======================== ЗАМЕНИТЬ
+			if (!connected) {
+				try_connect(sockfd, serv_addr);	
+			}
+		}
 	}
+	~MTBuff() { close(sockfd); }
+	
+	// Метод для соединения/переподключения к программе 2
+	int try_connect(int sockfd, struct sockaddr_in serv_addr) {
+		std::cout << "Connecting...\n";     
+		while ((connect(sockfd,(struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
+				&& !exit_prog)  {
+		    std::cout << "Connection error, retrying...\n"; 
+		    usleep(1000000);
+		}   
+		std::cout << "Connected.\n";
+		connected = 1;
+		return 0;
+	}
+	
 	void write_to_buff() {
 		std::string input;
 		while (!exit_prog) {
@@ -84,9 +131,24 @@ public:
 			int sum = sum_nums_from_str(data);
 			std::cout << "Thread 2 calculated: " << sum << '\n';
 
-			// Передача суммы в программу 2
-			// 
-			//
+			
+			// Проверка соединения с программой 2
+			bool lost_con = 1;
+			int n;
+			if (connected){
+				n = read(sockfd, &lost_con, 1); 
+			}		
+			std::cout << connected << ' ' << n << '\n';
+			if (connected && n == 0) { // ======================================== Либо && lost_con
+				std::cout << "Connection lost, trying to reconnect...\n";
+	 		    close(sockfd);
+	 		    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	 		    connected = 0;
+			}
+			if (connected) {
+				// Передача суммы в программу 2
+				write(sockfd, &sum, 1);
+			}       
 		}
 	}
 
@@ -158,6 +220,8 @@ private:
 	bool exit_prog;
 	Semaphore read_sema{0};
 	Semaphore write_sema{1};
+	int sockfd;
+	bool connected;
 };
 
 int main() {
