@@ -42,12 +42,14 @@ int main(int argc, char *argv[])
 	
 	socklen_t clilen = sizeof(cli_addr);
 	std::cout << "Waiting for acccept\n";
+    std::cout << "sockfd: " << sockfd << '\n'; 
+	
 	newsockfd = accept(sockfd, 
 			(struct sockaddr *) &cli_addr, 
 			&clilen);
 	if (newsockfd < 0) { error("ERROR on accept"); }
 	std::cout << "Accepted\n";
-	
+	std::cout << "newsockfd: " << newsockfd << '\n'; 
 	
 	// Передача данных 
 	char buffer[256];
