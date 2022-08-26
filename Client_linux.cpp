@@ -1,6 +1,4 @@
 #include <iostream>
-//#include <stdio.h>
-//#include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
@@ -14,9 +12,7 @@ void error(const char *msg) {
 }
 
 int try_connect(int sockfd, struct sockaddr_in serv_addr) {
-    std::cout << "Connecting...\n";
-    //std::cout << "sockfd: " << sockfd << '\n'; 
-    //std::cout << "serv_addr: ..." << '\n';     
+    std::cout << "Connecting...\n";     
     while (connect(sockfd,(struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)  {
         std::cout << "Connection error, retrying...\n"; 
         usleep(1000000);
@@ -67,6 +63,7 @@ int main(int argc, char *argv[])
 		}       
 		std::cout << "n: " << n << '\n';
 		std::cout << "Server message: " << buffer << '\n';
+
 		// Обратная связь с сервером
 		bool lost_con = 0;
 		write(sockfd, &lost_con, 1);

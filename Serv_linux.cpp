@@ -13,13 +13,11 @@ void error(const char *msg) {
 
 int try_accept(int sockfd,	struct sockaddr_in cli_addr, socklen_t clilen) {
 	std::cout << "Waiting for acccept\n";
-    //std::cout << "sockfd: " << sockfd << '\n'; 
 	int newsockfd = accept(sockfd, 
 			(struct sockaddr *) &cli_addr, 
 			&clilen);
 	if (newsockfd < 0) { error("ERROR on accept"); }
 	std::cout << "Accepted\n";
-	//std::cout << "newsockfd: " << newsockfd << '\n';
 	return newsockfd;
 }
 
@@ -59,14 +57,11 @@ int main(int argc, char *argv[])
 		std::cout << "Enter a value:\n";
 		std::cin >> buffer;
 		int n = write(newsockfd,buffer,255);
-		//std::cout << "n: " << n << '\n'; 
-		//std::cout << "newsockfd: " << newsockfd << '\n'; 
 		if (n < 0) { error("ERROR writing to socket"); }
 		
 		// Обратная связь с клиентом
 		bool lost_con = 1;
 		read(newsockfd,&lost_con,1);
-		//std::cout << "Lost con?: " << lost_con << '\n';
 		if (lost_con) {
 			std::cout << "Client connection lost, reconnecting...\n";
 			newsockfd = try_accept(sockfd, cli_addr, clilen); 
