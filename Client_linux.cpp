@@ -10,14 +10,13 @@
 
 void error(const char *msg) {
 	std::cout << msg;
-	return;
+	exit(1);
 }
 
 int try_connect(int sockfd, struct sockaddr_in serv_addr) {
     std::cout << "Connecting...\n";
-    std::cout << "sockfd: " << sockfd << '\n'; 
-    std::cout << "serv_addr: ..." << '\n';     
-    
+    //std::cout << "sockfd: " << sockfd << '\n'; 
+    //std::cout << "serv_addr: ..." << '\n';     
     while (connect(sockfd,(struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)  {
         std::cout << "Connection error, retrying...\n"; 
         usleep(1000000);
@@ -28,9 +27,7 @@ int try_connect(int sockfd, struct sockaddr_in serv_addr) {
 
 int main(int argc, char *argv[])
 {
-    int portno = 21947;
-    struct sockaddr_in serv_addr;
-
+    std::cout << "CLIENT\n";
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) { error("ERROR opening socket"); }
         
@@ -39,31 +36,39 @@ int main(int argc, char *argv[])
         fprintf(stderr,"ERROR, no such host\n");
         exit(0);
     }
-    
+	
+	// Адрес сервера
+    int portno = 21947;
+    struct sockaddr_in serv_addr;    
     bzero((char *) &serv_addr, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(portno);
     bcopy((char *)server->h_addr, 
          (char *)&serv_addr.sin_addr.s_addr,
          server->h_length);
-    serv_addr.sin_port = htons(portno);
+
     
     // Соединение с сервером
     try_connect(sockfd, serv_addr);
 	
 	// Прием данных сервера
-	int n;
 	char buffer[256];
 	while (1) {
 		bzero(buffer,256);
-		n = read(sockfd,buffer,255);
+		int n = read(sockfd,buffer,255);
 		if (n < 0) { error("ERROR reading from socket"); }       
 		if (n == 0) { 
-		    std::cout << "Connection lost.\n";
- 		    break;
- 		    //try_connect(sockfd, serv_addr); continue; 
+		    std::cout << "Connection lost, trying to reconnect...\n";
+ 		    close(sockfd);
+ 		    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    		if (sockfd < 0) { error("ERROR opening socket"); }
+ 		    try_connect(sockfd, serv_addr); 
+ 		    continue; 
 		}       
 		std::cout << "n: " << n << '\n';
-		printf("Server message: %s\n",buffer);
+		std::cout << "Server message: " << buffer << '\n';
+		char c = 'W';
+		int nw = write(sockfd,&c,1);
 	}
     
     close(sockfd);
