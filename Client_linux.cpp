@@ -1,3 +1,4 @@
+#include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -9,6 +10,8 @@
 
 void error(const char *msg)
 {
+	std::cout << msg;
+	return;
     perror(msg);
     exit(0);
 }
@@ -38,22 +41,32 @@ int main(int argc, char *argv[])
          server->h_length);
     serv_addr.sin_port = htons(portno);
     
-    if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) 
-        error("ERROR connecting");
+    while (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0)  {
+        printf("Connection error, retrying...\n"); // error() call
+        usleep(1000000);
+    }
+	   
+	std::cout << "Connected.\n";
+	   
+	while (1) {
+		//std::cin >> inp;
+		//printf("Please enter the message: ");
+		//bzero(buffer,256);
+		//fgets(buffer,255,stdin);
+		//n = write(sockfd,buffer,strlen(buffer));
+		//if (n < 0) 
+		//error("ERROR writing to socket");
+		 
+		char val;
+		bzero(buffer,256);
+		n = read(sockfd,buffer,255);
+		if (n < 0) { error("ERROR reading from socket"); }       
+		if (n == 0) { break; }       
+		std::cout << "n: " << n << '\n';
+		printf("Server message: %s\n",buffer);
+	}
     
-    printf("Please enter the message: ");
-    bzero(buffer,256);
-    fgets(buffer,255,stdin);
-    n = write(sockfd,buffer,strlen(buffer));
-    if (n < 0) 
-         error("ERROR writing to socket");
-         
-    bzero(buffer,256);
-    n = read(sockfd,buffer,255);
-    if (n < 0) 
-         error("ERROR reading from socket");
-        
-    printf("%s\n",buffer);
     close(sockfd);
+    main(argc, argv);
     return 0;
 }
