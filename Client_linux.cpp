@@ -70,6 +70,5 @@ int main(int argc, char *argv[])
 	}
     
     close(sockfd);
-    main(argc, argv);
     return 0;
 }
