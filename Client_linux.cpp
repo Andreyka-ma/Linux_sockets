@@ -6,11 +6,6 @@
 #include <netinet/in.h>
 #include <netdb.h> 
 
-void error(const char *msg) {
-	std::cout << msg;
-	exit(1);
-}
-
 int try_connect(int sockfd, struct sockaddr_in serv_addr) {
     std::cout << "Connecting...\n";     
     while (connect(sockfd,(struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)  {
@@ -25,7 +20,6 @@ int main(int argc, char *argv[])
 {
     std::cout << "CLIENT\n";
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0) { error("ERROR opening socket"); }
         
     struct hostent *server = gethostbyname("localhost");
     if (server == NULL) {
@@ -52,12 +46,10 @@ int main(int argc, char *argv[])
 	while (1) {
 		bzero(buffer,256);
 		int n = read(sockfd,buffer,255);
-		if (n < 0) { error("ERROR reading from socket"); }       
 		if (n == 0) { 
 		    std::cout << "Connection lost, trying to reconnect...\n";
  		    close(sockfd);
  		    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    		if (sockfd < 0) { error("ERROR opening socket"); }
  		    try_connect(sockfd, serv_addr); 
  		    continue; 
 		}       
