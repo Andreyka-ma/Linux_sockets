@@ -91,7 +91,7 @@ public:
 		while (!exit_prog) {
 			// Считываем строку, пока не удовл. условия 
 			while (true) {
-				std::cout << "Thread 1 waiting for input (64 numbers max)...\n";
+				std::cout << "Thread 1 waiting for user input (64 numbers max)...\n";
 				std::cin >> input;
 				if (input == "exit") { exit_prog = 1; input.clear(); break; }
 				// Проверка длины строки (не больше 64 символов)
@@ -208,12 +208,6 @@ public:
 			}
 		}
 		return res;
-	}
-	void buff_state() const {
-		while (!exit_prog) {
-			//Sleep(10000);
-			std::cout << "\nBuff: " << buff << '\n';
-		}
 	}
 private:
 	std::string buff;
