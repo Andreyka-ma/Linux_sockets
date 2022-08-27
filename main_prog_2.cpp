@@ -6,6 +6,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+bool check(int n) {	return (n > 9) && (n % 32 == 0); }
+
 int try_accept(int sockfd,	struct sockaddr_in cli_addr, socklen_t clilen) {
 	std::cout << "Waiting for acccept\n";
 	int newsockfd = accept(sockfd, 
@@ -17,6 +19,7 @@ int try_accept(int sockfd,	struct sockaddr_in cli_addr, socklen_t clilen) {
 
 int main(int argc, char *argv[])
 {
+	setlocale(LC_ALL, "rus");
     std::cout << "SERVER\n";
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	
@@ -42,45 +45,31 @@ int main(int argc, char *argv[])
 	int newsockfd = try_accept(sockfd, cli_addr, clilen); 
 	
 	// Передача данных 
-	char buffer[256];
 	while(1) {
 		// Обратная связь с клиентом
 		bool lost_con = 0; 
 		int n = write(newsockfd,&lost_con,1);
 		
+		// Получение значения из программы 1
 		int value = -1;
-		read(newsockfd,&value,1);
+		read(newsockfd,&value,sizeof(int));
 		if (value == -1) {
 			std::cout << "Client connection lost, reconnecting...\n";
 			newsockfd = try_accept(sockfd, cli_addr, clilen); 
+		}
+		else {
+			// Выводим сообщение о полученных данных 
+			// если полученное значение состоит из 
+			// более 2-ух символов и кратно 32  
+			if (check(value)) {
+				std::cout << "Received data: " << value << '\n';
+			}
+			else {
+				std::cout << "Error - incorrect data - " << value << '\n';
+			}
 		}
 	}    
 	close(newsockfd);
 	close(sockfd);
 	return 0; 
-}
-
-
-bool check(int n) {
-	return (n > 9) && (n % 32 == 0);
-}
-
-int main() {
-	int n;
-	// Получение значения из программы 1
-	std::cout << "Waiting for input...\n";
-	std::cin >> n;
-	// Выводим сообщение о полученных данных 
-	// если полученное значение состоит из 
-	// более 2-ух символов и кратно 32  
-	if (check(n)) {
-		std::cout << "Received data: " << n << '\n';
-	}
-	else {
-		std::cout << "Error - incorrect data\n";
-	}
-
-	main();
-	setlocale(LC_ALL, "rus");
-	return 0;
 }

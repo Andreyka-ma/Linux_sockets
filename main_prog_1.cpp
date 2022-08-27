@@ -134,12 +134,9 @@ public:
 			
 			// Проверка соединения с программой 2
 			bool lost_con = 1;
-			int n;
-			if (connected){
-				n = read(sockfd, &lost_con, 1); 
-			}		
-			std::cout << connected << ' ' << n << '\n';
-			if (connected && n == 0) { // ======================================== Либо && lost_con
+			if (connected){ read(sockfd, &lost_con, 1); }		
+			std::cout << connected << ' ' << lost_con << '\n';
+			if (connected && lost_con) { // ======================================== Либо && lost_con
 				std::cout << "Connection lost, trying to reconnect...\n";
 	 		    close(sockfd);
 	 		    sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -147,7 +144,7 @@ public:
 			}
 			if (connected) {
 				// Передача суммы в программу 2
-				write(sockfd, &sum, 1);
+				write(sockfd, &sum, sizeof(int));
 			}       
 		}
 	}
