@@ -8,11 +8,11 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h> 
-        
+
 class Semaphore {
 public:
-    Semaphore (int count_ = 0)
-    : count(count_) {}
+    Semaphore (int count_)
+    	: count(count_) {}
     
     inline void release() {
         std::unique_lock<std::mutex> lock(mtx);
@@ -49,7 +49,7 @@ public:
 		// localhost    
 		struct hostent *server = gethostbyname("localhost");
 		
-		// Адрес сервера ============================== ПЕРЕНЕСТИ В ПОЛЯ КЛАССА
+		// Адрес сервера 
 		int portno = 21947;
 		struct sockaddr_in serv_addr;    
 		bzero((char *) &serv_addr, sizeof(serv_addr));
@@ -61,19 +61,18 @@ public:
 		     
 		// Поддержание соединения с сервером
 		while(!exit_prog) {
-			usleep(1000000); // ======================== ЗАМЕНИТЬ
-			std::cout << "Constructor while\n";
-			//connect_sema.acquire();
+
 			if (!connected) {
 				try_connect(sockfd, serv_addr);	
 			}
+			connect_sema.acquire();
 		}
 	}
 	~MTBuff() { close(sockfd); }
 	
 	// Метод для соединения/переподключения к программе 2
 	int try_connect(int sockfd, struct sockaddr_in serv_addr) {
-		std::cout << "Connecting...\n";     
+		std::cout << "Connecting to Prog_2...\n";     
 		while ((connect(sockfd,(struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
 				&& !exit_prog)  { usleep(1000000); }   
 		std::cout << "Connected.\n";
@@ -82,14 +81,20 @@ public:
 	}
 	
 	void write_to_buff() {
-		std::cout << "Type 'exit' to quit.\n";
+		std::cout << "Prog 1. Type 'exit' to quit.\n";
 		std::string input;
 		while (!exit_prog) {
 			// Считываем строку, пока не удовл. условия 
 			while (true) {
 				std::cout << "Thread 1 waiting for user input (64 numbers max)...\n";
 				std::cin >> input;
-				if (input == "exit") { exit_prog = 1; read_sema.release(); return; }
+				// Выход из программы
+				if (input == "exit") { 
+					exit_prog = 1;
+					connect_sema.release(); 
+					read_sema.release(); 
+					return; 
+				}
 				// Проверка длины строки (не больше 64 символов)
 				if (input.size() > 64) {
 					std::cout << "Error - too many characters.\n";
@@ -127,24 +132,22 @@ public:
 			// Вывод и обработка полученных данных
 			std::cout << "Thread 2 received: " << data << '\n';
 			int sum = sum_nums_from_str(data);
-			std::cout << "Thread 2 calculated: " << sum << '\n';
+			//std::cout << "Thread 2 calculated: " << sum << '\n';
 
-			
 			// Проверка соединения с программой 2
 			bool lost_con = 1;
 			if (connected){ read(sockfd, &lost_con, 1); }		
-			std::cout << connected << ' ' << lost_con << '\n';
 			if (connected && lost_con) { 
-				std::cout << "Connection lost, trying to reconnect...\n";
+				std::cout << "Prog_2 connection lost, trying to reconnect...\n";
 	 		    close(sockfd);
 	 		    sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	 		    connected = 0;
+	 		    connect_sema.release();
 			}
 			if (connected) {
 				// Передача суммы в программу 2
-				std::cout << "Sending data...\n";
-				write(sockfd, &sum, sizeof(int));
-				std::cout << "Sent\n";
+				std::cout << "Thread 2 sending data to Prog_2...\n";
+				int sent_num = write(sockfd, &sum, sizeof(int));
 			}       
 		}
 	}
@@ -211,6 +214,7 @@ private:
 	bool exit_prog;
 	Semaphore read_sema{0};
 	Semaphore write_sema{1};
+	Semaphore connect_sema{0};
 	int sockfd;
 	bool connected;
 };

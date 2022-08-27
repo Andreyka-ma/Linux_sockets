@@ -1,5 +1,6 @@
 /* A simple server in the internet domain using TCP */
 #include <iostream>
+#include<future>
 #include <string.h> 
 #include <unistd.h>
 #include <sys/types.h> 
@@ -8,18 +9,32 @@
 
 bool check(int n) {	return (n > 9) && (n % 32 == 0); }
 
+void exit_inp(bool * exit_prog, int newsockfd, int sockfd) {
+	std::string input = "";
+	while (input != "exit") {
+		std::cin >> input;
+	}
+	close(newsockfd);
+	close(sockfd);
+	exit(0);
+	*exit_prog = 1;
+	return;
+}
+
 int try_accept(int sockfd,	struct sockaddr_in cli_addr, socklen_t clilen) {
-	std::cout << "Waiting for acccept\n";
+	std::cout << "Waiting for Prog_1 connection...\n";
 	int newsockfd = accept(sockfd, 
 			(struct sockaddr *) &cli_addr, 
 			&clilen);
-	std::cout << "Accepted\n";
+	std::cout << "Connected.\n";
 	return newsockfd;
 }
 
 int main(int argc, char *argv[])
 {
 	setlocale(LC_ALL, "rus");
+	std::cout << "Prog_2. Type 'exit' to quit.\n";
+
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	
 	// Разрешение переиспользования порта
@@ -44,7 +59,9 @@ int main(int argc, char *argv[])
 	int newsockfd = try_accept(sockfd, cli_addr, clilen); 
 	
 	// Передача данных 
-	while(1) {
+	bool exit_prog = 0;
+	std::future<void> fut = std::async(std::launch::async, exit_inp, &exit_prog, newsockfd, sockfd);
+	while(!exit_prog) {
 		// Обратная связь с клиентом
 		bool lost_con = 0; 
 		int n = write(newsockfd,&lost_con,1);
@@ -53,7 +70,7 @@ int main(int argc, char *argv[])
 		int value = -1;
 		read(newsockfd,&value,sizeof(int));
 		if (value == -1) {
-			std::cout << "Client connection lost, reconnecting...\n";
+			std::cout << "Prog_1 connection lost.\n";
 			newsockfd = try_accept(sockfd, cli_addr, clilen); 
 		}
 		else {
@@ -61,10 +78,10 @@ int main(int argc, char *argv[])
 			// если полученное значение состоит из 
 			// более 2-ух символов и кратно 32  
 			if (check(value)) {
-				std::cout << "Received data: " << value << '\n';
+				std::cout << "Received data from Prog_1: " << value << '\n';
 			}
 			else {
-				std::cout << "Error - incorrect data - " << value << '\n';
+				std::cout << "Error - incorrect data received.\n";
 			}
 		}
 	}    
