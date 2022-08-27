@@ -45,12 +45,9 @@ public:
 		
 		// Создание соединения с программой 2
 		sockfd = socket(AF_INET, SOCK_STREAM, 0);
-		    
+		
+		// localhost    
 		struct hostent *server = gethostbyname("localhost");
-		if (server == NULL) {
-		    fprintf(stderr,"ERROR, no such host\n");
-		    exit(0);
-		}
 		
 		// Адрес сервера ============================== ПЕРЕНЕСТИ В ПОЛЯ КЛАССА
 		int portno = 21947;
@@ -65,6 +62,8 @@ public:
 		// Поддержание соединения с сервером
 		while(!exit_prog) {
 			usleep(1000000); // ======================== ЗАМЕНИТЬ
+			std::cout << "Constructor while\n";
+			//connect_sema.acquire();
 			if (!connected) {
 				try_connect(sockfd, serv_addr);	
 			}
@@ -76,36 +75,34 @@ public:
 	int try_connect(int sockfd, struct sockaddr_in serv_addr) {
 		std::cout << "Connecting...\n";     
 		while ((connect(sockfd,(struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
-				&& !exit_prog)  {
-		    std::cout << "Connection error, retrying...\n"; 
-		    usleep(1000000);
-		}   
+				&& !exit_prog)  { usleep(1000000); }   
 		std::cout << "Connected.\n";
 		connected = 1;
 		return 0;
 	}
 	
 	void write_to_buff() {
+		std::cout << "Type 'exit' to quit.\n";
 		std::string input;
 		while (!exit_prog) {
 			// Считываем строку, пока не удовл. условия 
 			while (true) {
 				std::cout << "Thread 1 waiting for user input (64 numbers max)...\n";
 				std::cin >> input;
-				if (input == "exit") { exit_prog = 1; input.clear(); break; }
+				if (input == "exit") { exit_prog = 1; read_sema.release(); return; }
 				// Проверка длины строки (не больше 64 символов)
 				if (input.size() > 64) {
-					std::cout << "Too many characters\n";
+					std::cout << "Error - too many characters.\n";
 					continue;
 				}
 				// Проверяем, что строка состоит только из цифр
 				if (!is_numbers(input)) {
-					std::cout << "Not all numbers (or empty?)\n";
+					std::cout << "Error - not all characters are numbers.\n";
 					continue;
 				}
 				break;
 			}			
-
+			
 			// Строка сортируется по убыванию, 
 			// четные заменяются на латинские буквы "KB"
 			sort_and_replace_even(input);
@@ -124,6 +121,8 @@ public:
 			data = buff;
 			buff.clear();		  
 			write_sema.release(); // Разрешение записи
+
+			if (exit_prog) { return; }
 
 			// Вывод и обработка полученных данных
 			std::cout << "Thread 2 received: " << data << '\n';
