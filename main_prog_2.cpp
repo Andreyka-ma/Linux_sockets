@@ -20,7 +20,6 @@ int try_accept(int sockfd,	struct sockaddr_in cli_addr, socklen_t clilen) {
 int main(int argc, char *argv[])
 {
 	setlocale(LC_ALL, "rus");
-    std::cout << "SERVER\n";
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	
 	// Разрешение переиспользования порта

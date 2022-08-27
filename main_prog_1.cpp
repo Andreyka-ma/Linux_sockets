@@ -44,7 +44,6 @@ public:
 		std::future<void> fut2 = std::async(std::launch::async, &MTBuff::read_buff, this);
 		
 		// Создание соединения с программой 2
-		std::cout << "CLIENT\n";
 		sockfd = socket(AF_INET, SOCK_STREAM, 0);
 		    
 		struct hostent *server = gethostbyname("localhost");
@@ -136,7 +135,7 @@ public:
 			bool lost_con = 1;
 			if (connected){ read(sockfd, &lost_con, 1); }		
 			std::cout << connected << ' ' << lost_con << '\n';
-			if (connected && lost_con) { // ======================================== Либо && lost_con
+			if (connected && lost_con) { 
 				std::cout << "Connection lost, trying to reconnect...\n";
 	 		    close(sockfd);
 	 		    sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -144,7 +143,9 @@ public:
 			}
 			if (connected) {
 				// Передача суммы в программу 2
+				std::cout << "Sending data...\n";
 				write(sockfd, &sum, sizeof(int));
+				std::cout << "Sent\n";
 			}       
 		}
 	}
