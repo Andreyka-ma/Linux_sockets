@@ -60,6 +60,7 @@ public:
 		return newsockfd;
 	}
 	
+	// Метод для потока записи в буфер
 	void write_to_buff() {
 		std::string input;
 		while (!exit_prog) {
@@ -97,6 +98,8 @@ public:
 			read_sema.release(); // Разрешение чтения
 		}
 	}
+	
+	// Метод для потока чтения из буфера
 	void read_buff() {
 		std::string data;
 		while (!exit_prog) {
@@ -124,8 +127,9 @@ public:
 				read(newsockfd,&lost_con,1);
 				if (lost_con) {
 					std::cout << "Prog_2 connection lost.\n";
+					// Сигнал основному потоку восстановить подключение 
 					connected = 0;
-					connect_sema.release();
+					connect_sema.release(); 
 				}
 			}    
 		}
