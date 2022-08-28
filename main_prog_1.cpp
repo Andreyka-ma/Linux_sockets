@@ -8,29 +8,6 @@
 #include <netinet/in.h>
 #include<fcntl.h>
 
-/* accept timeout
-int mx = std::max(sockfd, newsockfd);
-		fd_set readset;
-		FD_ZERO(&readset);
-        FD_SET(sockfd, &readset);
-        FD_SET(newsockfd, &readset);
-        while(!exit_prog) {
-		    timeval timeout;
-		    timeout.tv_sec = 3;
-		    timeout.tv_usec = 0;
-			std::cout << "Cycle\n";
-			select(mx + 1, &readset, NULL, NULL, &timeout);
-			if(FD_ISSET(sockfd, &readset)) {
-				std::cout << "ACCCCCCET\n";
-				retsockfd = accept(sockfd, 
-						(struct sockaddr *) &cli_addr, 
-						&clilen);
-				break;
-			}
-		}
-		if (exit_prog) { return -1; }
-*/
-
 class MTBuff {
 public:
 	MTBuff() : buff(""), exit_prog(0), connected(0) {
@@ -41,7 +18,7 @@ public:
 		// Поток 2
 		std::future<void> fut2 = std::async(std::launch::async, &MTBuff::read_buff, this);
 		
-		int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+		sockfd = socket(AF_INET, SOCK_STREAM, 0);
 		
 		// Разрешение переиспользования порта
 		const int enable = 1;
@@ -58,15 +35,11 @@ public:
 			 sizeof(serv_addr)); 
 		
 		listen(sockfd,5);
-		
-		// Адрес клиента
-		struct sockaddr_in cli_addr;
-		socklen_t clilen = sizeof(cli_addr); 
 			     
 		// Поддержание соединения с сервером
 		while(!exit_prog) {
 			if (!connected) {
-				newsockfd = try_accept(sockfd, cli_addr, clilen);	
+				newsockfd = try_accept(sockfd);	
 			}
 			connect_sema.acquire();
 		}
@@ -74,11 +47,9 @@ public:
 	~MTBuff() { close(newsockfd); close(sockfd); }
 
 	// Метод для соединения/переподключения к программе 2	
-	int try_accept(int sockfd,	struct sockaddr_in cli_addr, socklen_t clilen) {
+	int try_accept(int sockfd) {
 		std::cout << "Waiting for Prog_2 connection...\n";
-		int retsockfd = accept(sockfd, 
-						(struct sockaddr *) &cli_addr, 
-						&clilen);
+		int retsockfd = accept(sockfd, NULL, NULL);
 		std::cout << "Connected.\n";
 		connected = 1;
 		return retsockfd;
@@ -151,6 +122,8 @@ public:
 				read(newsockfd,&lost_con,1);
 				if (lost_con) {
 					std::cout << "Prog_2 connection lost.\n";
+					shutdown(newsockfd, SHUT_RDWR);
+					close(newsockfd);
 					// Сигнал основному потоку восстановить подключение 
 					connected = 0;
 					connect_sema.release(); 
