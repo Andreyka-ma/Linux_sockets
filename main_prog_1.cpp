@@ -6,6 +6,30 @@
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include<fcntl.h>
+
+/* accept timeout
+int mx = std::max(sockfd, newsockfd);
+		fd_set readset;
+		FD_ZERO(&readset);
+        FD_SET(sockfd, &readset);
+        FD_SET(newsockfd, &readset);
+        while(!exit_prog) {
+		    timeval timeout;
+		    timeout.tv_sec = 3;
+		    timeout.tv_usec = 0;
+			std::cout << "Cycle\n";
+			select(mx + 1, &readset, NULL, NULL, &timeout);
+			if(FD_ISSET(sockfd, &readset)) {
+				std::cout << "ACCCCCCET\n";
+				retsockfd = accept(sockfd, 
+						(struct sockaddr *) &cli_addr, 
+						&clilen);
+				break;
+			}
+		}
+		if (exit_prog) { return -1; }
+*/
 
 class MTBuff {
 public:
@@ -52,12 +76,12 @@ public:
 	// Метод для соединения/переподключения к программе 2	
 	int try_accept(int sockfd,	struct sockaddr_in cli_addr, socklen_t clilen) {
 		std::cout << "Waiting for Prog_2 connection...\n";
-		int newsockfd = accept(sockfd, 
-				(struct sockaddr *) &cli_addr, 
-				&clilen);
+		int retsockfd = accept(sockfd, 
+						(struct sockaddr *) &cli_addr, 
+						&clilen);
 		std::cout << "Connected.\n";
 		connected = 1;
-		return newsockfd;
+		return retsockfd;
 	}
 	
 	// Метод для потока записи в буфер
