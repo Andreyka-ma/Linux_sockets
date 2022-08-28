@@ -1,13 +1,11 @@
 #include<iostream>
 #include<future>
-#include<mutex>
-#include <condition_variable>
+#include <semaphore>
 #include <string.h> 
 #include <unistd.h>
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <semaphore>
 
 class MTBuff {
 public:

@@ -37,22 +37,6 @@ int main(int argc, char *argv[])
          (char *)&serv_addr.sin_addr.s_addr,
          server->h_length);
 
-    
-    
-	int error = 0;
-	socklen_t len = sizeof (error);
-	int retval = getsockopt (sockfd, SOL_SOCKET, SO_ERROR, &error, &len);
-
-	if (retval != 0) {
-    /* there was a problem getting the error code */
-    fprintf(stderr, "error getting socket error code: %s\n", strerror(retval));
-	}
-
-	if (error != 0) {
-		/* socket has a non zero error status */
-		fprintf(stderr, "socket error: %s\n", strerror(error));
-	}
-
 	// Соединение с сервером
     try_connect(sockfd, serv_addr);
 	
