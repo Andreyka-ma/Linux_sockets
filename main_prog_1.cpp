@@ -7,32 +7,7 @@
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <netinet/in.h>
-
-
-class Semaphore {
-public:
-    Semaphore (int count_)
-    	: count(count_) {}
-    
-    inline void release() {
-        std::unique_lock<std::mutex> lock(mtx);
-        count++;
-        //notify the waiting thread
-        cv.notify_one();
-    }
-    inline void acquire() {
-        std::unique_lock<std::mutex> lock(mtx);
-        while(count == 0) {
-            //wait on the mutex until notify is called
-            cv.wait(lock);
-        }
-        count--;
-    }
-private:
-    std::mutex mtx;
-    std::condition_variable cv;
-    int count;
-};
+#include <semaphore>
 
 class MTBuff {
 public:
@@ -218,9 +193,12 @@ public:
 private:
 	std::string buff;
 	bool exit_prog;
-	Semaphore read_sema{0};
-	Semaphore write_sema{1};
-	Semaphore connect_sema{0};
+	std::binary_semaphore read_sema{0};
+	std::binary_semaphore write_sema{1};
+	std::binary_semaphore connect_sema{0};
+	//Semaphore read_sema{0};
+	//Semaphore write_sema{1};
+	//Semaphore connect_sema{0};
 	int sockfd;
 	int newsockfd;
 	bool connected;
