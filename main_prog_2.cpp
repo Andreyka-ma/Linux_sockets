@@ -1,77 +1,55 @@
 /* A simple server in the internet domain using TCP */
 #include <iostream>
-#include<future>
-#include <string.h> 
 #include <unistd.h>
-#include <sys/types.h> 
+#include <string.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netdb.h> 
 
 bool check(int n) {	return (n > 9) && (n % 32 == 0); }
 
-void exit_inp(bool * exit_prog, int newsockfd, int sockfd) {
-	std::string input = "";
-	while (input != "exit") {
-		std::cin >> input;
-	}
-	close(newsockfd);
-	close(sockfd);
-	exit(0);
-	*exit_prog = 1;
-	return;
-}
-
-int try_accept(int sockfd,	struct sockaddr_in cli_addr, socklen_t clilen) {
-	std::cout << "Waiting for Prog_1 connection...\n";
-	int newsockfd = accept(sockfd, 
-			(struct sockaddr *) &cli_addr, 
-			&clilen);
+// Функция для переподключения к программе 1
+int try_connect(int sockfd, struct sockaddr_in serv_addr) {
+    std::cout << "Waiting for Prog_1 connection...\n";     
+    while (connect(sockfd,(struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)  {
+        usleep(1000000);
+    }   
 	std::cout << "Connected.\n";
-	return newsockfd;
+	return 0;
 }
 
 int main(int argc, char *argv[])
 {
-	setlocale(LC_ALL, "rus");
-	std::cout << "Prog_2. Type 'exit' to quit.\n";
+	std::cout << "Prog_2.\n";
+    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    
+    // localhost
+    struct hostent *server = gethostbyname("localhost");
+	
+	// Адрес сервера
+    int portno = 21947;
+    struct sockaddr_in serv_addr;    
+    bzero((char *) &serv_addr, sizeof(serv_addr));
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(portno);
+    bcopy((char *)server->h_addr, 
+         (char *)&serv_addr.sin_addr.s_addr,
+         server->h_length);
 
-	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	// Соединение с сервером
+    try_connect(sockfd, serv_addr);
 	
-	// Разрешение переиспользования порта
-	const int enable = 1;
-	setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int));
-	
-	// Привязка сокета к адресу
-	int portno = 21947;
-	struct sockaddr_in serv_addr;
-	bzero((char *) &serv_addr, sizeof(serv_addr));
-	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_addr.s_addr = INADDR_ANY;
-	serv_addr.sin_port = htons(portno);
-	bind(sockfd, (struct sockaddr *) &serv_addr,
-		 sizeof(serv_addr)); 
-	
-	listen(sockfd,5);
-	
-	// Новый сокет и прием клиента
-	struct sockaddr_in cli_addr;
-	socklen_t clilen = sizeof(cli_addr);
-	int newsockfd = try_accept(sockfd, cli_addr, clilen); 
-	
-	// Передача данных 
-	bool exit_prog = 0;
-	std::future<void> fut = std::async(std::launch::async, exit_inp, &exit_prog, newsockfd, sockfd);
-	while(!exit_prog) {
-		// Обратная связь с клиентом
-		bool lost_con = 0; 
-		int n = write(newsockfd,&lost_con,1);
-		
-		// Получение значения из программы 1
+	// Прием данных программы 1
+	while (1) {
 		int value = -1;
-		read(newsockfd,&value,sizeof(int));
+		read(sockfd,&value,sizeof(int));
 		if (value == -1) {
-			std::cout << "Prog_1 connection lost.\n";
-			newsockfd = try_accept(sockfd, cli_addr, clilen); 
+			std::cout << "Prog_1 connection lost, trying to reconnect...\n";
+ 		    close(sockfd);
+ 		    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+ 		    try_connect(sockfd, serv_addr); 
+ 		    continue;			 
 		}
 		else {
 			// Выводим сообщение о полученных данных 
@@ -84,8 +62,11 @@ int main(int argc, char *argv[])
 				std::cout << "Error - incorrect data received.\n";
 			}
 		}
-	}    
-	close(newsockfd);
+
+		// Обратная связь с программой 1
+		bool lost_con = 0;
+		write(sockfd, &lost_con, 1);
+	}
 	close(sockfd);
 	return 0; 
 }
