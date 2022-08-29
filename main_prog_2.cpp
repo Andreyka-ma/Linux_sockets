@@ -34,20 +34,24 @@ public:
 			int value = -1;
 			read(sockfd,&value,sizeof(int));
 			if (value == -1) {
+				// Потеряно соединение
 				std::cout << "Prog_1 connection lost, trying to reconnect...\n";
 	 		    close(sockfd);
 	 		    sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	 		    try_connect(sockfd, serv_addr); 
 	 		    continue;			 
-			}
-			else {
-				// Выводим сообщение о полученных данных 
-				// если полученное значение состоит из 
-				// более 2-ух символов и кратно 32  
+			} 
+			// Значение value -2 не обрабатываем, т.к.
+			// оно лишь означает, что соединение функционирует.
+			else if (value != -2) {
 				if (check(value)) {
+					// Выводим сообщение о данных 
+					// если value состоит из более  
+					// 2-ух символов и кратно 32  
 					std::cout << "Received data from Prog_1: " << value << '\n';
 				}
 				else {
+					// Выводим сообщение об ошибке
 					std::cout << "Error - incorrect data received.\n";
 				}
 			}

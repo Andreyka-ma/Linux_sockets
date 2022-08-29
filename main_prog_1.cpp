@@ -1,12 +1,12 @@
-#include<iostream>
-#include<future>
+#include <iostream>
+#include <future>
+#include <mutex>
 #include <semaphore>
 #include <string.h> 
 #include <unistd.h>
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include<fcntl.h>
 
 class MTBuff {
 public:
@@ -35,13 +35,36 @@ public:
 			 sizeof(serv_addr)); 
 		
 		listen(sockfd,5);
-			     
-		// Поддержание соединения с сервером
+		
+		// Подкл./поддерж. соединения:  периодически 
+		// обмениваем данные с программой 2
 		while(!exit_prog) {
+			mtx.lock(); // Задерживаем поток 2
+			if (connected) {
+				// Чтобы не программа 2 не путала эти
+				// данные с основными, можно отправлять
+				// подставное значение (например -2)
+				int val = -2; 
+				write(newsockfd,&val,sizeof(int));
+				
+				bool lost_con = 1;
+				read(newsockfd,&lost_con,1);
+				if (lost_con) {
+					// Потеряно соединение
+					std::cout << "Prog_2 connection lost.\n";
+					shutdown(newsockfd, SHUT_RDWR);
+					close(newsockfd);
+					connected = 0;
+				}
+			}
+			// Выяснили состояние соединения - 
+			// отпускаем поток 2
+			mtx.unlock(); 
 			if (!connected) {
+				// Восстановление соединения
 				newsockfd = try_accept(sockfd);	
 			}
-			connect_sema.acquire();
+			usleep(1000000);
 		}
 	}
 	~MTBuff() { close(newsockfd); close(sockfd); }
@@ -66,7 +89,6 @@ public:
 				// Выход из программы
 				if (input == "exit") { 
 					exit_prog = 1;
-					connect_sema.release(); 
 					read_sema.release(); 
 					return; 
 				}
@@ -113,6 +135,7 @@ public:
 			
 			
 			// Передача данных 
+			mtx.lock();
 			if (connected) {
 				// Передача суммы программе 2
 				write(newsockfd,&sum,sizeof(int));
@@ -124,11 +147,10 @@ public:
 					std::cout << "Prog_2 connection lost.\n";
 					shutdown(newsockfd, SHUT_RDWR);
 					close(newsockfd);
-					// Сигнал основному потоку восстановить подключение 
 					connected = 0;
-					connect_sema.release(); 
 				}
-			}    
+			}
+			mtx.unlock();    
 		}
 	}
 
@@ -194,10 +216,7 @@ private:
 	bool exit_prog;
 	std::binary_semaphore read_sema{0};
 	std::binary_semaphore write_sema{1};
-	std::binary_semaphore connect_sema{0};
-	//Semaphore read_sema{0};
-	//Semaphore write_sema{1};
-	//Semaphore connect_sema{0};
+	std::mutex mtx;
 	int sockfd;
 	int newsockfd;
 	bool connected;
