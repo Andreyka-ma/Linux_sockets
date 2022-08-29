@@ -128,7 +128,7 @@ public:
 			mtx.lock(); 
 			if (connected) {
 				// Передача суммы программе 2
-				std::cout << "Sending data to Prog_2\n";
+				std::cout << "Sending data to Prog_2.\n";
 				write(newsockfd,&sum,sizeof(int));
 				
 				// Обратная связь с программой 2
