@@ -10,7 +10,7 @@
 
 class MTBuff {
 public:
-	MTBuff() : buff(""), exit_prog(0), connected(0) {
+	MTBuff() : buff(""), connected(0) {
 		std::cout << "Prog_1\n";
 		// Запуск потоков чтения и записи
 		// Поток 1
@@ -38,7 +38,7 @@ public:
 		
 		// Подкл./поддерж. соединения:  периодически 
 		// обмениваем данные с программой 2
-		while(!exit_prog) {
+		while(true) {
 			mtx.lock(); // Задерживаем поток 2
 			if (connected) {
 				// Чтобы не программа 2 не путала эти
@@ -81,17 +81,11 @@ public:
 	// Метод для потока записи в буфер
 	void write_to_buff() {
 		std::string input;
-		while (!exit_prog) {
+		while (true) {
 			// Считываем строку, пока не удовл. условия 
 			while (true) {
 				std::cout << "Thread 1 waiting for user input (64 numbers max)...\n";
 				std::cin >> input;
-				// Выход из программы
-				if (input == "exit") { 
-					exit_prog = 1;
-					read_sema.release(); 
-					return; 
-				}
 				// Проверка длины строки (не больше 64 символов)
 				if (input.size() > 64) {
 					std::cout << "Error - too many characters.\n";
@@ -119,14 +113,12 @@ public:
 	// Метод для потока чтения из буфера
 	void read_buff() {
 		std::string data;
-		while (!exit_prog) {
+		while (true) {
 			// Получение данных из общего буфера, очистка буфера
 			read_sema.acquire();  // Блокировка чтения
 			data = buff;
 			buff.clear();		  
 			write_sema.release(); // Разрешение записи
-
-			if (exit_prog) { return; }
 
 			// Вывод и обработка полученных данных
 			std::cout << "Thread 2 received: " << data << '\n';
@@ -213,7 +205,6 @@ public:
 	}
 private:
 	std::string buff;
-	bool exit_prog;
 	std::binary_semaphore read_sema{0};
 	std::binary_semaphore write_sema{1};
 	std::mutex mtx;
