@@ -99,8 +99,8 @@ public:
 				break;
 			}			
 			
-			// Строка сортируется по убыванию, 
-			// четные заменяются на латинские буквы "KB"
+			// Строка сортируется по убыванию, четные 
+			// значения заменяются на латинские буквы "KB"
 			sort_and_replace_even(input);
 
 			// Строка помещается в общий буфер
@@ -123,11 +123,9 @@ public:
 			// Вывод и обработка полученных данных
 			std::cout << "Thread 2 received: " << data << '\n';
 			int sum = sum_nums_from_str(data);
-			//std::cout << "Thread 2 calculated: " << sum << '\n';
-			
 			
 			// Передача данных 
-			mtx.lock();
+			mtx.lock(); 
 			if (connected) {
 				// Передача суммы программе 2
 				write(newsockfd,&sum,sizeof(int));
@@ -136,6 +134,7 @@ public:
 				bool lost_con = 1;
 				read(newsockfd,&lost_con,1);
 				if (lost_con) {
+					// Потеряно соединение
 					std::cout << "Prog_2 connection lost.\n";
 					shutdown(newsockfd, SHUT_RDWR);
 					close(newsockfd);
@@ -162,7 +161,8 @@ public:
 
 	// Метод обработки строки для потока 1.
 	// Сортирует строку по убыванию, заменяя 
-	// элементы с четными значениями на "KB"
+	// элементы с четными значениями на "KB".
+	// (Элементом считается один символ строки)
 	void sort_and_replace_even(std::string& input) {
 		// Сортировка подсчетом удобна, т.к. 
 		// потребуется заменить значения 
@@ -184,16 +184,16 @@ public:
 			if (i % 2 == 0) { out_elem = "KB"; }
 			else { out_elem = char('0' + i); }
 			for (int j = 0; j < char_cnt[i]; j++) {
-				// Сорт. по убыванию, элементы
-				// помещаем в начало строки
+				// Сорт. по убыванию, новые элементы
+				// нужно помещать "слева" строки
 				input = out_elem + input;
 			}
 		}
 	}
 	
-	// Метод для расчета суммы всех элементов, 
+	// Метод для расчета суммы элементов строки, 
 	// которые являются численными значениями.
-	// Элементом считается один символ строки.
+	// (Элементом считается один символ строки)
 	int sum_nums_from_str(std::string const& data) const {
 		int res = 0;
 		for (char const& c : data) {
