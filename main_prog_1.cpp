@@ -128,6 +128,7 @@ public:
 			mtx.lock(); 
 			if (connected) {
 				// Передача суммы программе 2
+				std::cout << "Sending data to Prog_2\n";
 				write(newsockfd,&sum,sizeof(int));
 				
 				// Обратная связь с программой 2
@@ -145,8 +146,8 @@ public:
 		}
 	}
 
-	// Метод проверки того, что 
-	// строка состоит только из цифр
+	// Метод проверки того, что строка
+	// состоит только из цифр и не пуста
 	bool is_numbers(const std::string& s) const {
 		bool nums = true;
 		for (char c : s) {
@@ -168,11 +169,13 @@ public:
 		// потребуется заменить значения 
 		// некоторых элементов на "KB"
 		size_t const max_el = 10;
-		int char_cnt[max_el] = { 0 };
+		int sym_cnt[max_el] = { 0 };
 
-		// Запоминаем количество элементов
+		// В массив sym_cnt записывается 
+		// количество вхождения каждого элемента
+		// в порядке 9, 8, 7, ..., 2, 1, 0.
 		for (char const & c : input) {
-			char_cnt[c - '0']++;
+			sym_cnt['9' - c]++;
 		}
 		
 		// Помещаем в input отсортированную 
@@ -181,12 +184,11 @@ public:
 		input.clear();
 		std::string out_elem;
 		for (size_t i = 0; i < max_el; i++) {
-			if (i % 2 == 0) { out_elem = "KB"; }
-			else { out_elem = char('0' + i); }
-			for (int j = 0; j < char_cnt[i]; j++) {
-				// Сорт. по убыванию, новые элементы
-				// нужно помещать "слева" строки
-				input = out_elem + input;
+			// (i % 2 != 0) - четные значения по нечетным индексам
+			if (i % 2 != 0) { out_elem = "KB"; } 
+			else { out_elem = char('9' - i); }
+			for (int j = 0; j < sym_cnt[i]; j++) {
+				input += out_elem;
 			}
 		}
 	}
@@ -214,10 +216,6 @@ private:
 };
 
 int main() {
-	setlocale(LC_ALL, "rus");
 	MTBuff B;
-	std::cout << "Main\n1. Неоднозначность поведения в случае ввода пустой строки?\n";
-	std::cout << "2. Считается ли main своим потоком? Почему вывод только после 'выхода' из MTBuff?\n";
-	std::cout << "3. Переделать while(true)?\n";
 	return 0;
 }
