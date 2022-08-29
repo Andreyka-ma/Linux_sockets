@@ -52,7 +52,6 @@ public:
 				if (lost_con) {
 					// Потеряно соединение
 					std::cout << "Prog_2 connection lost.\n";
-					shutdown(newsockfd, SHUT_RDWR);
 					close(newsockfd);
 					connected = 0;
 				}
@@ -137,7 +136,6 @@ public:
 				if (lost_con) {
 					// Потеряно соединение
 					std::cout << "Prog_2 connection lost.\n";
-					shutdown(newsockfd, SHUT_RDWR);
 					close(newsockfd);
 					connected = 0;
 				}

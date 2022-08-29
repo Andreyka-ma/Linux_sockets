@@ -61,7 +61,7 @@ public:
 			write(sockfd, &lost_con, 1);
 		}	
 	}
-	~Prog2_Cli() { shutdown(sockfd, SHUT_RDWR); close(sockfd); }
+	~Prog2_Cli() { close(sockfd); }
 	
 	// Метод для переподключения к программе 1
 	int try_connect(int sockfd, struct sockaddr_in serv_addr) {
