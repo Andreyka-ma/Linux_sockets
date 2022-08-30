@@ -10,7 +10,7 @@
 
 class MTBuff {
 public:
-	MTBuff();
+	MTBuff(int portno);
 	~MTBuff();
 
 	// Метод для соединения/переподключения к программе 2	
@@ -30,7 +30,7 @@ public:
 	// Сортирует строку по убыванию, заменяя 
 	// элементы с четными значениями на "KB".
 	// (Элементом считается один символ строки)
-	void sort_and_replace_even(std::string& input) ;
+	void sort_and_replace_even(std::string& input);
 	
 	// Метод для расчета суммы элементов строки, 
 	// которые являются численными значениями.
@@ -48,11 +48,12 @@ private:
 };
 
 int main() {
-	MTBuff();
+	int port_num = 21947;
+	MTBuff B(port_num);
 	return 0;
 }
 
-MTBuff::MTBuff() : buff(""), connected(0) {
+MTBuff::MTBuff(int portno) : buff(""), connected(0) {
 	std::cout << "Prog_1\n";
 	// Запуск потоков чтения и записи
 	// Поток 1
@@ -67,7 +68,6 @@ MTBuff::MTBuff() : buff(""), connected(0) {
 	setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int));
 	
 	// Привязка сокета к адресу
-	int portno = 21947;
 	struct sockaddr_in serv_addr;
 	bzero((char *) &serv_addr, sizeof(serv_addr));
 	serv_addr.sin_family = AF_INET;
@@ -83,7 +83,7 @@ MTBuff::MTBuff() : buff(""), connected(0) {
 	while(true) {
 		mtx.lock(); // Задерживаем поток 2
 		if (connected) {
-			// Чтобы не программа 2 не путала эти
+			// Чтобы программа 2 не путала эти
 			// данные с основными, можно отправлять
 			// подставное значение (например -2)
 			int val = -2; 

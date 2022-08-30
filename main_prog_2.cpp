@@ -9,7 +9,7 @@
 
 class Prog2_Cli {
 public:
-	Prog2_Cli();
+	Prog2_Cli(int portno);
 	~Prog2_Cli();
 	
 	// Метод для переподключения к программе 1
@@ -23,11 +23,12 @@ private:
 };
 
 int main(int argc, char *argv[]) {
-	Prog2_Cli();
+	int port_num = 21947;
+	Prog2_Cli C(port_num);
 	return 0; 
 }
 
-Prog2_Cli::Prog2_Cli() {
+Prog2_Cli::Prog2_Cli(int portno) {
 	std::cout << "Prog_2.\n";
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	
@@ -35,7 +36,6 @@ Prog2_Cli::Prog2_Cli() {
 	struct hostent *server = gethostbyname("localhost");
 	
 	// Адрес сервера
-	int portno = 21947;
 	struct sockaddr_in serv_addr;    
 	bzero((char *) &serv_addr, sizeof(serv_addr));
 	serv_addr.sin_family = AF_INET;
