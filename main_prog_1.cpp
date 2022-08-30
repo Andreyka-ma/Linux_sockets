@@ -61,6 +61,7 @@ MTBuff::MTBuff(int portno) : buff(""), connected(0) {
 	// Поток 2
 	std::future<void> fut2 = std::async(std::launch::async, &MTBuff::read_buff, this);
 	
+	// Используется TCP
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	
 	// Разрешение переиспользования порта

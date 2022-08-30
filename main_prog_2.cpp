@@ -1,4 +1,3 @@
-/* A simple server in the internet domain using TCP */
 #include <iostream>
 #include <unistd.h>
 #include <string.h>
@@ -13,13 +12,14 @@ public:
 	~Prog2_Cli();
 	
 	// Метод для переподключения к программе 1
-	int try_connect(int sockfd, struct sockaddr_in serv_addr);
+	int try_connect();
 	
-	// Метод проверки принимаемых программой данных
-	bool check(int n);
+	// Метод для определения количества символов
+	int symbols(int n) const;
 	
 private:
 	int sockfd;
+	struct sockaddr_in serv_addr;
 };
 
 int main(int argc, char *argv[]) {
@@ -30,13 +30,13 @@ int main(int argc, char *argv[]) {
 
 Prog2_Cli::Prog2_Cli(int portno) {
 	std::cout << "Prog_2.\n";
+	// Используется TCP
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	
 	// localhost
 	struct hostent *server = gethostbyname("localhost");
 	
-	// Адрес сервера
-	struct sockaddr_in serv_addr;    
+	// Адрес сервера    
 	bzero((char *) &serv_addr, sizeof(serv_addr));
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_port = htons(portno);
@@ -44,8 +44,8 @@ Prog2_Cli::Prog2_Cli(int portno) {
 	      (char *)&serv_addr.sin_addr.s_addr,
 	      server->h_length);
 
-	// Соединение с сервером
-	try_connect(sockfd, serv_addr);
+	// Соединение с программой 1
+	try_connect();
 	
 	// Прием данных программы 1
 	while (1) {
@@ -53,24 +53,29 @@ Prog2_Cli::Prog2_Cli(int portno) {
 		read(sockfd,&value,sizeof(int));
 		if (value == -1) {
 			// Потеряно соединение
-			std::cout << "Prog_1 connection lost, trying to reconnect...\n";
+			std::cout << "Prog_1 connection lost.\n";
  		    close(sockfd);
  		    sockfd = socket(AF_INET, SOCK_STREAM, 0);
- 		    try_connect(sockfd, serv_addr); 
+ 		    try_connect(); 
  		    continue;			 
 		} 
 		// Значение value -2 не обрабатываем, т.к.
-		// оно лишь означает, что соединение функционирует.
+		// оно лишь означает, что соединение функционирует
 		else if (value != -2) {
-			if (check(value)) {
-				// Выводим сообщение о данных 
-				// если value состоит из более  
-				// 2-ух символов и кратно 32  
-				std::cout << "Received data from Prog_1: " << value << '\n';
+			// Анализ количества символов
+			int value_sym = symbols(value);
+			if (value_sym <= 2) { 
+				// Выводим сообщение об ошибке
+				std::cout << "Error - received a " << value_sym
+				<< "-symbol value (more than 2 symbols required).\n";
+			}
+			else if (value % 32 != 0) {
+				// Выводим сообщение об ошибке
+				std::cout << "Error - received value is not a multiple of 32.\n";
 			}
 			else {
-				// Выводим сообщение об ошибке
-				std::cout << "Error - incorrect data received.\n";
+				// Выводим сообщение о данных
+				std::cout << "Received data from Prog_1: " << value << '\n';
 			}
 		}
 		
@@ -83,7 +88,7 @@ Prog2_Cli::Prog2_Cli(int portno) {
 Prog2_Cli::~Prog2_Cli() { close(sockfd); }
 
 // Метод для переподключения к программе 1
-int Prog2_Cli::try_connect(int sockfd, struct sockaddr_in serv_addr) {
+int Prog2_Cli::try_connect() {
 	std::cout << "Waiting for Prog_1 connection...\n";     
 	while (connect(sockfd,(struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)  {
 	    sleep(0.5);
@@ -92,6 +97,13 @@ int Prog2_Cli::try_connect(int sockfd, struct sockaddr_in serv_addr) {
 	return 0;
 }
 
-// Метод проверки принимаемых программой данных
-bool Prog2_Cli::check(int n) {	return (n > 9) && (n % 32 == 0); }
+// Метод для определения количества символов.
+int Prog2_Cli::symbols(int n) const { 
+	int cnt = 0;
+	while(n > 0) {
+		n /= 10;
+		cnt++; 
+	}	
+	return cnt; 
+}
 
