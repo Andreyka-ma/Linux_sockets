@@ -43,6 +43,7 @@ private:
 	std::binary_semaphore write_sema{1};
 	std::mutex mtx;
 	int sockfd;
+	struct sockaddr_in serv_addr;
 	int newsockfd;
 	bool connected;
 };
@@ -69,7 +70,6 @@ MTBuff::MTBuff(int portno) : buff(""), connected(0) {
 	setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int));
 	
 	// Привязка сокета к адресу
-	struct sockaddr_in serv_addr;
 	bzero((char *) &serv_addr, sizeof(serv_addr));
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = INADDR_ANY;

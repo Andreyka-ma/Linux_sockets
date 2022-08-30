@@ -19,6 +19,7 @@ public:
 	
 private:
 	int sockfd;
+	struct hostent *server;
 	struct sockaddr_in serv_addr;
 };
 
@@ -34,7 +35,7 @@ Prog2_Cli::Prog2_Cli(int portno) {
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	
 	// localhost
-	struct hostent *server = gethostbyname("localhost");
+	server = gethostbyname("localhost");
 	
 	// Адрес сервера    
 	bzero((char *) &serv_addr, sizeof(serv_addr));
