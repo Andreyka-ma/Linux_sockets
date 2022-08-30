@@ -105,7 +105,7 @@ MTBuff::MTBuff() : buff(""), connected(0) {
 			// Восстановление соединения
 			newsockfd = try_accept(sockfd);	
 		}
-		usleep(1000000);
+		sleep(0.5);
 	}
 }
 

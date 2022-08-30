@@ -86,7 +86,7 @@ Prog2_Cli::~Prog2_Cli() { close(sockfd); }
 int Prog2_Cli::try_connect(int sockfd, struct sockaddr_in serv_addr) {
 	std::cout << "Waiting for Prog_1 connection...\n";     
 	while (connect(sockfd,(struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)  {
-	    usleep(500000);
+	    sleep(0.5);
 	}   
 	std::cout << "Connected.\n";
 	return 0;
